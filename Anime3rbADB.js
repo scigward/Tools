@@ -24,7 +24,6 @@
             value: noop
         });
     });
-
     ['cancelFullScreen', 'webkitCancelFullScreen', 'mozCancelFullScreen'].forEach(name => {
         Object.defineProperty(Element.prototype, name, {
             configurable: true,
@@ -35,32 +34,28 @@
 
     console.log('[Bypass] Fullscreen block injected.');
 
-    window.addEventListener('display-modal', (e) => {
-        console.log('[Bypass] Blocked modal trigger event.');
-        e.stopImmediatePropagation();
-        e.preventDefault();
-    }, true);
+    Object.defineProperty(window, 'isOpen', {
+        get: () => false,
+        set: () => {},
+        configurable: true
+    });
 
     const hideModal = () => {
-        const modal = document.querySelector('#support');
-        if (modal) {
-            modal.remove();
+        document.querySelectorAll('div[x-show="isOpen"]').forEach(el => {
+            el.remove();
             console.log('[Bypass] Modal removed.');
-        }
+        });
 
-        const overlay = document.querySelector('a[style*="position: absolute"][style*="top: 0px"]');
-        if (overlay) {
-            overlay.remove();
-            console.log('[Bypass] Fullscreen ad overlay removed.');
-        }
+        document.querySelectorAll('a[style*="position:fixed"][style*="width:100vw"]').forEach(el => {
+            el.remove();
+            console.log('[Bypass] Overlay removed.');
+        });
 
         document.body.style.overflow = 'auto';
         document.documentElement.style.overflow = 'auto';
     };
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const observer = new MutationObserver(() => hideModal());
-        observer.observe(document.body, { childList: true, subtree: true });
-        hideModal();
-    });
+    new MutationObserver(hideModal).observe(document.documentElement, { childList: true, subtree: true });
+
+    hideModal();
 })();
